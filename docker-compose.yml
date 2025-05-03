@@ -1,0 +1,39 @@
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    env_file:
+      - cmd/auction/.env
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - localNetwork
+    security_opt:
+      - seccomp:unconfined
+    cap_add:
+      - SYS_ADMIN
+    privileged: true      
+
+  app:
+    build:
+      dockerfile: Dockerfile
+      context: .
+    ports:
+      - "8080:8080"
+    env_file:
+      - cmd/auction/.env
+    depends_on:
+      - mongodb
+    networks:
+      - localNetwork
+    entrypoint: ["/app/wait-for-it.sh", "mongodb", "27017", "--", "/app/auction"]      
+
+volumes:
+  mongo-data:
+    driver: local
+
+networks:
+  localNetwork:
+    driver: bridge
